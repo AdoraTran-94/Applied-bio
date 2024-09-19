@@ -6,10 +6,10 @@
     cd HW2
 ````
 ## 1. Downloading the gff 
-```html
 Go to the 
-<a https://ftp.ensembl.org/pub/current_gff3/drosophila_melanogaster/Drosophila_melanogaster.BDGP6.46.112.primary_assembly.mitochondrion_genome.gff3.gz>
-```
+[link](https://ftp.ensembl.org/pub/current_gff3/drosophila_melanogaster/Drosophila_melanogaster.BDGP6.46.112.primary_assembly.mitochondrion_genome.gff3.gz
+)
+* or download by Ubuntu
 ````
     wget https://ftp.ensembl.org/pub/current_gff3/drosophila_melanogaster/Drosophila_melanogaster.BDGP6.46.112.primary_assembly.mitochondrion_genome.gff3.gz
 ````
