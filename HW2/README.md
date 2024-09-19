@@ -55,7 +55,7 @@ Go to the
 ````
 * grep -v "^#" to filter out comment lines (which start with #). awk '{print $3}’ to extract the third column, which contains the feature types. sort to sort the feature types alphabetically. uniq –c to count occurrences of each unique feature type. sort –nr to sort the counts in numerical reverse order (most frequent first). Finally, head -n 10 to display the top ten feature types.
 
-* Here is the link to access the .md file named 'HW2' via https://github.com/AdoraTran-94/Applied-bio
+* Here is the link to access the .md file named 'HW2' via [my Git hub](https://github.com/AdoraTran-94/Applied-bio)
 
 * copy the text file named 'QnA' from desktop into folder HW2 (my current Ubuntu directory)
 ````
