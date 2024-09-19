@@ -1,23 +1,11 @@
 # **1. Reformat the previous assignment**
-## I did verify my repository 
-```html
-Go to the 
-<a https://github.com/AdoraTran-94/Applied-bio/>
-```
-## I made a Markdown file and committed the file in to HW2 folder 
-```html
-Go to the 
-<a https://github.com/AdoraTran-94/Applied-bio/blob/main/HW2/README.md>
-```
+## I did verify  [my repository](https://github.com/AdoraTran-94/Applied-bio/)
+## I made a Markdown file and committed the file into [HW2](https://github.com/AdoraTran-94/Applied-bio/blob/main/HW2/README.md)
 # **2. Visualize the GFF file of your choice**
-## Using IGV for viewing genome sequence from NCBI datasets 
-```html
-Go to the 
-<a ncbi.nlm.nih.gov/datasets/>
-```
-* search for Northern house mosquito (Culex pipiens) with RefSeq:GCF_016801865.2
+## Using IGV for viewing genome sequence from [NCBI datasets](ncbi.nlm.nih.gov/datasets/)
+* Search for Northern house mosquito (Culex pipiens) with RefSeq:GCF_016801865.2
 ![Culex pipiens NCBI](./image/Culex%20pipiens_NCBI.PNG)
-* create a directory named ‘image’ in the /home/adora/Applied-bio/HW3/ and add screenshots from desktop (C:\Users\Hieu\Desktop\image) into there later.
+* Create a directory named ‘image’ in the /home/adora/Applied-bio/HW3/ and add screenshots from desktop (C:\Users\Hieu\Desktop\image) into there later.
 ````
 	cd ~applied-bio
 	mkdir HW3
@@ -130,8 +118,7 @@ Go to the
 ![added_transcript](./image/added_transcript.PNG)
 ---
 ## Post directory to the git hub 
-* Markdown file is named README.md
-* https://github.com/AdoraTran-94/Applied-bio/tree/main/assignment03
+* Markdown file is named README.md in [HW3](https://github.com/AdoraTran-94/Applied-bio/tree/main/HW3)
 * Upload this folder HW3 into Git hub
 ````
 	cd /home/adora/Applied-bio
