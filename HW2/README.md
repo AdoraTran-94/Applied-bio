@@ -43,11 +43,15 @@
 ```ls /home/adora/Applied-bio/HW2/
 
 * Upload this folder HW2 into Git hub
-```mkdir -p /home/adora/Applied-bio/Lec03
-```cp -r /home/adora/Applied-bio/HW2/ /home/adora/Applied-bio/Lec03/HW2
+```mkdir -p /home/adora/Applied-bio
+```cp -r /home/adora/Applied-bio/HW2/ /home/adora/Applied-bio
 ```git add HW2/
 ```git commit -m "Created HW2 folder and added files" 
 ```git push origin main
-
-
+* Update changes for the same folder on Git hub
+```cd /home/adora/Applied-bio
+```git add .
+```git add HW2
+```git commit -m "Updated HW2"
+```git push origin main
 
