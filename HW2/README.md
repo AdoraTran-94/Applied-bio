@@ -38,16 +38,19 @@
 * Here is the link to access the .md file named 'HW2' via https://github.com/AdoraTran-94/Applied-bio
 
 * copy the text file named 'QnA' from desktop into folder HW2 (my current Ubuntu directory)
-```cp /mnt/c/Users/Hieu/Desktop/QnA.txt /home/adora/Applied-bio/HW2/
-```cp /mnt/c/Users/Hieu/Desktop/QnA.txt /home/adora/Applied-bio/HW2/
-```ls /home/adora/Applied-bio/HW2/
+````
+    cp /mnt/c/Users/Hieu/Desktop/QnA.txt /home/adora/Applied-bio/HW2/
+    ls /home/adora/Applied-bio/HW2/
+````
 
 * Upload this folder HW2 into Git hub
-```mkdir -p /home/adora/Applied-bio
-```cp -r /home/adora/Applied-bio/HW2/ /home/adora/Applied-bio
-```git add HW2/
-```git commit -m "Created HW2 folder and added files" 
-```git push origin main
+````
+    mkdir -p /home/adora/Applied-bio
+    cp -r /home/adora/Applied-bio/HW2/ /home/adora/Applied-bio
+    git add HW2/
+    git commit -m "Created HW2 folder and added files" 
+    git push origin main
+````
 * Update changes for the same folder on Git hub
 ```cd /home/adora/Applied-bio
 ```git add .
