@@ -39,6 +39,7 @@
 
 * copy the text file named 'QnA' from desktop into folder HW2 (my current Ubuntu directory)
 ```cp /mnt/c/Users/Hieu/Desktop/QnA.txt /home/adora/Applied-bio/HW2/
+```cp /mnt/c/Users/Hieu/Desktop/QnA.txt /home/adora/Applied-bio/HW2/
 ```ls /home/adora/Applied-bio/HW2/
 
 * Upload this folder HW2 into Git hub
