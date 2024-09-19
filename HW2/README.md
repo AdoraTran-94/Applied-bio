@@ -9,7 +9,7 @@
 Go to the 
 [link](https://ftp.ensembl.org/pub/current_gff3/drosophila_melanogaster/Drosophila_melanogaster.BDGP6.46.112.primary_assembly.mitochondrion_genome.gff3.gz
 )
-* or download by Ubuntu
+* Or download by Ubuntu
 ````
     wget https://ftp.ensembl.org/pub/current_gff3/drosophila_melanogaster/Drosophila_melanogaster.BDGP6.46.112.primary_assembly.mitochondrion_genome.gff3.gz
 ````
