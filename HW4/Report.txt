@@ -1,0 +1,63 @@
+Submit the link to the folder containing your script and the report: https://github.com/AdoraTran-94/Applied-bio/tree/main/HW4
+
+Part 1: Write a script Lecture: AI powered ScriptingLinks to an external site.
+For more details read the Markdown file README_1.md from /home/adora/Applied-bio/HW4/README_1.md
+
+According to HW2, write a Markdown report on processing a GFF file to count feature types.
+Run your script on your original data and verify that it works. You were also assigned to review someone else's report.
+Steps for the Assignment:
+1. Create a directory for the assignment (HW4) and a directory "image" into the "HW4"
+2. Prepare your script, which will be reusable by allowing variable changes.
+3. Run the script on both your data and someone else's data.
+4. Commit your script to the GitHub repository.
+
+Part 2: Make use of ontologies. Lecture: Sequence OntologyLinks to an external site.
+For more details, please check "README_2.md" /home/adora/Applied-bio/HW4/Ontology/README_2.md
+
+1.	Choose a feature type (gene) from the GFF file and look up its definition in the sequence ontology
+## gene (SO:0000704)
+A region (or regions) that includes all of the sequence
+elements necessary to encode a functional transcript. A gene
+may include regulatory regions, transcribed regions and/or
+other functional sequence regions.
+2. Find both the parent terms and children nodes of the term
+Parents:
+- biological_region 
+- gene_group (member_of)
+Children:
+- nuclear_gene 
+- mt_gene 
+- plastid_gene 
+- nucleomorph_gene 
+- plasmid_gene 
+- proviral_gene 
+- transposable_element_gene 
+- silenced_gene 
+- engineered_gene 
+- foreign_gene 
+- fusion_gene 
+- pseudogene (non_functional_homolog_of)
+- recombinationally_rearranged_gene 
+- gene_with_trans_spliced_transcript 
+- gene_with_polycistronic_transcript 
+- rescue_gene 
+- gene_member_region (member_of)
+- gene_component_region (part_of)
+- post_translationally_regulated_gene 
+- negatively_autoregulated_gene 
+- positively_autoregulated_gene 
+- translationally_regulated_gene 
+- epigenetically_modified_gene 
+- transgene 
+- predicted_gene 
+- allele (variant_of)
+- protein_coding_gene 
+- retrogene 
+- ncrna_gene 
+- cryptic_gene 
+- gene_with_non_canonical_start_codon 
+- candidate_gene 
+- vertebrate_immune_system_gene 
+- gene_cassette 
+3. Provide a short discussion of what you found
+The term "gene" (SO:0000704) is classified within broader biological regions and gene groups, highlighting its structural and functional significance. Its parent terms establish the foundational role of genes in heredity and biological processes, while the children nodes illustrate the remarkable diversity of genes based on location (e.g., nuclear, mitochondrial), function (e.g., protein-coding, non-coding RNA), and regulatory status (e.g., silenced, autoregulated).Notably, certain children nodes, such as pseudogenes and transgenes, reflect dynamic evolutionary processes like gene duplication and horizontal gene transfer. Additionally, parent terms like post-translationally regulated genes and epigenetically modified genes underscore the complex layers of regulation that govern gene expression beyond transcription. 

@@ -1,0 +1,28 @@
+The error message indicates that the datasets command is not found, which likely means the tool you want to use for downloading genome data isn't installed in the bioinfo environment or isn’t accessible due to the activation issue.
+
+Steps to Resolve the Issue
+Check Installed Packages: First, ensure that the necessary tool (likely ncbi-datasets-cli or similar) is installed in your bioinfo environment. Activate the environment and check:
+
+micromamba activate bioinfo
+micromamba list
+Look for ncbi-datasets-cli or any relevant tool.
+
+Install Missing Tool: If the tool is not installed, you can install it using:
+
+bash
+Copy code
+micromamba install -n bioinfo ncbi-datasets-cli
+After installation, make sure to activate the environment again:
+
+bash
+Copy code
+micromamba activate bioinfo
+Modify Your Script: If you are still running into issues with activation in the script, you can also run the download command directly with micromamba run:
+
+Update your script to include:
+
+echo "Downloading genome data for GCF_016801865.2..."
+micromamba run -n bioinfo datasets download genome accession GCF_016801865.2 --include gff3,cds,protein,rna,genome
+Run the Script Again: Save the changes to your script and run it again:
+
+./process_gff.sh
