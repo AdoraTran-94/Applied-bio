@@ -12,7 +12,7 @@ Steps for the Assignment:
 4. Commit your script to the GitHub repository.
 
 Part 2: Make use of ontologies. Lecture: Sequence OntologyLinks to an external site.
-For more details, please check "README_2.md" /home/adora/Applied-bio/HW4/Ontology/README_2.md
+For more details, please check "README_2.md" /home/adora/Applied-bio/HW4/README_2.md
 
 1.	Choose a feature type (gene) from the GFF file and look up its definition in the sequence ontology
 ## gene (SO:0000704)
