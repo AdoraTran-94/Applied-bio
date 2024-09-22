@@ -1,0 +1,48 @@
+
+## gene (SO:0000704)
+
+A region (or regions) that includes all of the sequence
+elements necessary to encode a functional transcript. A gene
+may include regulatory regions, transcribed regions and/or
+other functional sequence regions.
+
+Parents:
+- biological_region 
+- gene_group (member_of)
+
+Children:
+- nuclear_gene 
+- mt_gene 
+- plastid_gene 
+- nucleomorph_gene 
+- plasmid_gene 
+- proviral_gene 
+- transposable_element_gene 
+- silenced_gene 
+- engineered_gene 
+- foreign_gene 
+- fusion_gene 
+- pseudogene (non_functional_homolog_of)
+- recombinationally_rearranged_gene 
+- gene_with_trans_spliced_transcript 
+- gene_with_polycistronic_transcript 
+- rescue_gene 
+- gene_member_region (member_of)
+- gene_component_region (part_of)
+- post_translationally_regulated_gene 
+- negatively_autoregulated_gene 
+- positively_autoregulated_gene 
+- translationally_regulated_gene 
+- epigenetically_modified_gene 
+- transgene 
+- predicted_gene 
+- allele (variant_of)
+- protein_coding_gene 
+- retrogene 
+- ncrna_gene 
+- cryptic_gene 
+- gene_with_non_canonical_start_codon 
+- candidate_gene 
+- vertebrate_immune_system_gene 
+- gene_cassette 
+ 

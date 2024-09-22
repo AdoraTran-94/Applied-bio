@@ -1,0 +1,21 @@
+Children:
+- nuclear_gene 
+- mt_gene 
+- plastid_gene 
+- nucleomorph_gene 
+- plasmid_gene 
+- proviral_gene 
+- transposable_element_gene 
+- silenced_gene 
+- engineered_gene 
+- foreign_gene 
+- fusion_gene 
+- pseudogene (non_functional_homolog_of)
+- recombinationally_rearranged_gene 
+- gene_with_trans_spliced_transcript 
+- gene_with_polycistronic_transcript 
+- rescue_gene 
+- gene_member_region (member_of)
+- gene_component_region (part_of)
+- post_translationally_regulated_gene 
+- negatively_autoregulated_gene 
