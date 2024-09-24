@@ -1,7 +1,7 @@
 Submit the link to the folder containing your script and the report: https://github.com/AdoraTran-94/Applied-bio/tree/main/HW4
 
 Part 1: Write a script Lecture: AI powered ScriptingLinks to an external site.
-For more details read the Markdown file README_1.md from /home/adora/Applied-bio/HW4/README_1.md
+For more details read the Markdown file README_1_updated.md from /home/adora/Applied-bio/HW4/README_1.md
 
 According to HW2, write a Markdown report on processing a GFF file to count feature types.
 Run your script on your original data and verify that it works. You were also assigned to review someone else's report.
