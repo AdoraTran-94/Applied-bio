@@ -7,7 +7,7 @@ There are 16089 outputs.
 ## Identify a bad sequencing dataset by checking multiple SRR numbers.
 ### 1. Use data generated on the Illumina
 #### Find SRR001666 with Layout: PAIRED (_1 and _2)
-![SRR](SRR.PNG)
+![SRR](./image/SRR.PNG)
 ### 2. Write a script to download data from the SRA database.
 ````
 # Install fastp if necessary
@@ -50,9 +50,9 @@ fastqc $FASTQ_FILE_2
 ````
 #### The sequence quality visualization
 * For SRR001666_1
-![QC_1.PNG](QC_1.PNG)
+![QC_1.PNG](./image/QC_1.PNG)
 * For SRR001666_2
-![QC_2.PNG](QC_2.PNG)
+![QC_2.PNG](./image/QC_2.PNG)
 
 * Explain: 
 ````
@@ -67,20 +67,20 @@ The three-colored bands illustrate the typical labels that we assign to these me
 Therefore, the sequence quality visualization tells us that the quality of SRR001666_1 is mainly reliable, some are less reliable and error-prone (red), however the “stoplight” symbol showed green meaning "pass". While that of SRR001666_2 (another pair) demonstrates to be mainly in the yellow and red zones meaning less reliable and error-prone; this reflects by the “stoplight” symbol showed green meaning "error".
 #### the sequence length histogram
 * For SRR001666_1
-![SL_1.PNG](SL_1.PNG)
+![SL_1.PNG](./image/SL_1.PNG)
 * For SRR001666_2
-![SL_2.PNG](SL_2.PNG)
+![SL_2.PNG](./image/SL_2.PNG)
 ````
-The sequence length distribution shows how many sequences of each length the data contains. For fixed read length instruments, like the Illumina sequencer, all read lengths are the same. For long read technologies like the PacBio and MinION, the distribution can be a lot more varied.
+The sequence length distributions show an average of 36 sequences of each length the data contains. Because Illumina sequencer is fixed read length instruments, all read lengths are the same. For this categories, it showed pass.
 ````
 
 #### The sequence quality histogram 
 * For SRR001666_1
-![SQ_1.PNG](SQ_1.PNG)
+![SQ_1.PNG](./image/SQ_1.PNG)
 * For SRR001666_2
-![SQ_2.PNG](SQ_2.PNG)
+![SQ_2.PNG](./image/SQ_2.PNG)
 ````
-Another way to visualize data quality is to generate histograms of the average qualities. The horizontal scales are the quality scores; the vertical axis indicates the number of reads of that quality.
+ Because "the horizontal scales are the quality scores; the vertical axis indicates the number of reads of that quality", For SRR001666_1, the average is 38 average quality of read and for SRR001666_2, the average is 33. They are both passed.
 ````
 
 ### 4. Improve the quality of the reads in the dataset.
@@ -105,7 +105,24 @@ fastqc *.fq
 echo "Quality control and trimming completed successfully!"
 ````
 ### 5. Evaluate the quality again and document the improvements.
+#### Before Improvements
+* For these both sequencings, all the categories passed except for the "Per base sequence quality" was failed on the "For SRR001666_2", but I worked on both for that.
+* For SRR001666_1
+![O_1.PNG](./image/O_1.PNG)
+* For SRR001666_2
+![O_2.PNG](./image/O_2.PNG)
+#### After the improvement:
+* For SRR001666_1, all the categories passed except for two categories now are concerned "Per base sequence content" and "Sequence Length Distribution", "per base sequence quality" seemed improved a lot to most of the position of reads is in the green zone meaning reliable.
+![I_1.PNG](./image/I_1.PNG)
 
+* Similarly for SRR001666_2, Now "per base sequence quality" passed with most of the position of reads is in the green zone which means reliable. However, the "Per base sequence content" is red meaning error and "Sequence Length Distribution" is yellow meaning warning. Overall, it is improved and got better for analysis.
+![I_2.PNG](./image/I_2.PNG)
+* We can have a look at the data, when I put them all together below:
+![SM](./image/SM.PNG)
+* I could not find any publication for it as the below photos
+![P0](./image/P0.PNG)
 
+![P1](./image/P1.PNG)
 
-## The markdown report should explain the data and publication it corresponds to and present the results of your analysis.
+![P2](./image/P2.PNG)
+For this matter, I cannot compare my current results with their data and publication it corresponds to.
