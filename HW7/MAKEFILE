@@ -1,0 +1,82 @@
+# Makefile for Genome Simulation and FASTQ Quality Control
+
+# Variables
+SRR ?= SRR001666                     # SRA accession number
+ACC ?= GCF_000005845.2               # Genome accession number
+GENOME_DIR = ./genome                # Directory for genome files
+GENOME = $(GENOME_DIR)/genome.fa     # Symlink to downloaded genome
+R1 = reads/$(SRR)_1.fastq            # First read file
+R2 = reads/$(SRR)_2.fastq            # Second read file
+N ?= 10000                           # Number of reads to simulate/download
+READS_DIR = reads                    # Directory for simulated reads
+OUTPUT_DIR = ./SRA_data              # Directory for downloaded reads
+
+# Help message for users
+.PHONY: usage
+usage:
+	@echo "Usage: make <target>"
+	@echo "Targets:"
+	@echo "  usage        Print this help message"
+	@echo "  genome       Download the genome and create a symlink"
+	@echo "  simulate     Simulate reads for the genome with wgsim"
+	@echo "  download     Download reads from SRA"
+	@echo "  trim         Trim reads using fastp and trimmomatic"
+	@echo "  fastqc       Run FastQC on reads to generate reports"
+	@echo "  clean        Remove generated files and directories"
+
+# Download genome and create symlink
+.PHONY: genome
+genome:
+	@echo "Downloading genome..."
+	mkdir -p $(GENOME_DIR)
+	datasets download genome accession $(ACC) --output-file ncbi_dataset.zip
+	unzip -o ncbi_dataset.zip -d $(GENOME_DIR)
+	ln -sf $(GENOME_DIR)/ncbi_dataset/data/$(ACC)/*.fna $(GENOME)
+	@echo "Genome downloaded and symlink created at $(GENOME)."
+
+# Simulate reads using wgsim
+.PHONY: simulate
+simulate: genome
+	@echo "Simulating reads for the genome..."
+	mkdir -p $(READS_DIR)
+	total_size=$$(grep -v '^>' $(GENOME) | tr -d '\n' | wc -c)
+	num_reads=$$(( 10 * total_size / 100 ))
+	wgsim -N $(num_reads) -1 100 -2 100 $(GENOME) $(READS_DIR)/read1.fq $(READS_DIR)/read2.fq
+	@echo "Reads simulated successfully."
+
+# Download reads from SRA
+.PHONY: download
+download:
+	@echo "Downloading reads from SRA..."
+	mkdir -p $(OUTPUT_DIR)
+	cd $(OUTPUT_DIR) && fastq-dump -X $(N) --split-files $(SRR)
+	@echo "Reads downloaded to $(OUTPUT_DIR)."
+
+# Trim reads using fastp and trimmomatic
+.PHONY: trim
+trim: download
+	@echo "Trimming reads using fastp and trimmomatic..."
+	fastp --cut_tail -i $(R1) -I $(R2) -o $(R1).trim.fq -O $(R2).trim.fq
+	trimmomatic PE $(R1) $(R2) \
+		$(R1).trim.fq $(R1).unpaired.fq \
+		$(R2).trim.fq $(R2).unpaired.fq \
+		SLIDINGWINDOW:4:30
+	@echo "Trimming completed."
+
+# Generate FastQC reports
+.PHONY: fastqc
+fastqc: download trim
+	@echo "Generating FastQC reports..."
+	fastqc $(R1) $(R2)
+	fastqc $(R1).trim.fq $(R2).trim.fq
+	@echo "FastQC reports generated."
+
+# Clean up generated files and directories
+.PHONY: clean
+clean:
+	rm -rf $(GENOME_DIR) $(READS_DIR) $(OUTPUT_DIR) ncbi_dataset.zip
+	@echo "Cleaned up all generated files."
+
+# Default target
+.PHONY: all
+all: usage
