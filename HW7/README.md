@@ -1,15 +1,12 @@
 # Makefile Documentation: Simulating and Processing FASTQ Data
 ````
-Overview
-This Makefile automates key tasks in bioinformatics workflows, including genome download, read simulation, SRA data download, trimming, and quality control. The design relies on Make targets to separate tasks logically and uses variables to enhance flexibility. This ensures the process is both reusable and easy to maintain.
+This Makefile automates key tasks in bioinformatics workflows, including genome download, read simulation, SRA data download, trimming, and quality control.
 ````
-
-# Usage: To print the available targets and usage instructions, run:
-
+## Usage: To print the available targets and usage instructions, run:
 ````
 make usage
 ````
-### Makefile Structure
+## Makefile Structure
 The Makefile is organized into multiple targets. Below is a summary of each target and its function:
 | **Target**  | **Description**                                                |
 |-------------|----------------------------------------------------------------|
@@ -21,17 +18,16 @@ The Makefile is organized into multiple targets. Below is a summary of each targ
 | `fastqc`    | Runs fastqc on FASTQ files to generate quality control reports. |
 | `clean`     | Removes generated files and directories to clean up the workspace. |
 
-### Phony Targets
+## Phony Targets
 ````
-We use .PHONY to mark targets that don’t generate actual files to prevent make from being confused by similarly named files.
-````
+use .PHONY to mark targets that don’t generate actual files to prevent make from being confused by similarly named files.
 * Example:
-````
 .PHONY: genome simulate download trim fastqc clean
 ````
-# Variables in the Makefile
+## Variables in the Makefile
+````
 * These variables ensure that file paths, genome accessions, and read parameters can be easily configured without changing the underlying logic.
-
+````
 | **Target**  | **Description**                                                |
 |-------------|----------------------------------------------------------------|
 | `usage`     | Print help information about available commands.              |
@@ -53,87 +49,77 @@ We use .PHONY to mark targets that don’t generate actual files to prevent make
 | `R2`         | Path to the second read file                           | `reads_2.fq`             |
 
 
-* override these variables on the command line, like this:
+* Override these variables on the command line, like this:
 ````
 make simulate N=50000
 ````
-How to Execute All Commands
-To run all steps in sequence, you can either execute individual targets step-by-step or define a custom target (e.g., all) in your Makefile that runs them all. Here’s an example of how you can run everything:
+## How to Execute All Commands
 
-Option 1: Run Targets Individually
+* Option 1: Run Targets Individually
+````
 Download the Genome:
-
-bash
-Copy code
 make genome
+````
+````
 Simulate Reads:
-
-bash
-Copy code
 make simulate
+````
+````
 Download Reads from SRA:
-
-bash
-Copy code
 make download
+````
+````
 Trim the Reads:
-
-bash
-Copy code
 make trim
+````
+````
 Generate Quality Control Reports:
-
-bash
-Copy code
 make fastqc
-Clean Up Files (optional):
-
-bash
-Copy code
+````
+````
+Clean Up Files:
 make clean
-Option 2: Create an all Target
-Add this to your Makefile:
+````
 
-make
-Copy code
+* Option 2: Create an all Target
+````
+# Add this to your Makefile:
 .PHONY: all
 
 all: genome simulate download trim fastqc
     @echo "All tasks completed successfully!"
-Now, you can run everything with a single command:
 
-bash
-Copy code
+# @echo pattern helps: Keep the output clean and informative. Focus on the result rather than the underlying commands. Make Makefile's output user-friendly, especially for non-technical users
+* Now, you can run everything with a single command:
 make all
-Explanation of Each Target
-Genome Download:
-
 ````
+
+### Explanation of Each Target
+````
+# Genome Download:
 genome:
     datasets download genome accession $(ACC)
     unzip -o ncbi_dataset.zip
     ln -sf ncbi_dataset/data/$(ACC)/*.fna $(GENOME)
-Downloads the genome and creates a symbolic link to simplify access.
+## Downloads the genome and creates a symbolic link to simplify access.
 ````
-
-* Simulate Reads:
 ````
+# Simulate Reads:
 simulate:
     mkdir -p reads
     wgsim -N $(N) -1 100 -2 100 -r 0 -R 0 -X 0 $(GENOME) $(R1) $(R2)
-Simulates paired-end reads using the genome.
+## Simulates paired-end reads using the genome.
 ````
-* Download SRA Reads:
+````
+# Download SRA Reads:
 
-````
 download:
     mkdir -p SRA_data
     fastq-dump -X 10000 --split-files $(SRR) -O SRA_data
-Downloads reads from the SRA database.
+## Downloads reads from the SRA database.
 ````
-
-* Trim Reads:
 ````
+# Trim Reads:
 trim:
     fastp -i SRA_data/$(SRR)_1.fastq -I SRA_data/$(SRR)_2.fastq \
           -o trimmed_1.fq -O trimmed_2.fq
@@ -141,25 +127,23 @@ trim:
                 trimmed_1.trimmed.fq unpaired_1.fq \
                 trimmed_2.trimmed.fq unpaired_2.fq \
                 SLIDINGWINDOW:4:30
-Trims reads using fastp and trimmomatic.
+## Trims reads using fastp and trimmomatic.
 ````
-
-* Generate FastQC Reports:
 ````
+# Generate FastQC Reports:
 fastqc:
     fastqc $(R1) $(R2) trimmed_1.fq trimmed_2.fq
-Runs quality control checks on the raw and trimmed reads.
+## Runs quality control checks on the raw and trimmed reads.
 ````
-
-* Clean Up:
 ````
+# Clean Up:
 clean:
     rm -rf reads SRA_data trimmed_*.fq *.zip *.fa *.fastq
-Removes all generated files to clean up the workspace.
+## Removes all generated files to clean up the workspace.
 ````
 
 ## How to Run the Makefile
-Open your terminal and navigate to the directory containing the Makefile.
+* Open your terminal and navigate to the directory containing the Makefile.
 Use the following command :
 ````
 # to print usage instructions
@@ -167,4 +151,3 @@ Use the following command :
 # to execute individual tasks or run all tasks using:
     make all
 ````
-
