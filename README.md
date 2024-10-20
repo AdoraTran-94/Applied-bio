@@ -5,3 +5,4 @@
 *	HW4 contains scripts and markdown reports for Scripting and Sequence Ontologies.
 *	HW5 contains a scripts and a markdown report for Simulating FASTQ files.
 *	HW6 contains a script and a markdown report for FASTQ Quality Control.
+* HW7 contains a makefile and a markdown report for making a MAKEFILE to write a scripts to simulate reads and to obtain and trim reads for a realistic dataset.
