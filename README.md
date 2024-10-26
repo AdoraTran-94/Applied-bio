@@ -7,3 +7,4 @@
 *	HW6 contains a script and a markdown report for FASTQ Quality Control.
 * HW7 contains a makefile and a markdown report for making a MAKEFILE to simulate reads and to obtain and trim reads for a realistic dataset.
 * HW8 contains a makefile and a markdown report for Generating a BAM alignment file between simulated reads and a reference genome.
+* HW9 contains a makefile and a markdown report for using samtools commands to extract specific statistics and creating a filtered BAM file
