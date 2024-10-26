@@ -92,7 +92,7 @@ make clean
 ````
 	@echo "Counting primary alignments..."
 	samtools view -c -F 256 -F 2048 $(BAM)
-    @echo "Counting secondary alignments..."
+    	@echo "Counting secondary alignments..."
 	samtools view -c -f 256 $(BAM)
 	@echo "Counting supplementary alignments..."
 	samtools view -c -f 2048 $(BAM)
@@ -101,7 +101,7 @@ make clean
 
 3. How many properly-paired alignments on the reverse strand are formed by reads contained in the first pair ?
 ````
-@echo "Counting properly paired alignments on the reverse strand for the first pair..."
+	@echo "Counting properly paired alignments on the reverse strand for the first pair..."
 	samtools view -c -f 99 $(BAM) # flag 99 indicates proper pair with first read on reverse strand
 ````
 * There are 3414 -paired alignments on the reverse strand are formed by reads contained in the first pair.
