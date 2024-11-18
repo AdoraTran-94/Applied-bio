@@ -9,3 +9,4 @@
 * HW8 contains a makefile and a markdown report for Generating a BAM alignment file between simulated reads and a reference genome.
 * HW9 contains a makefile and a markdown report for using samtools commands to extract specific statistics and creating a filtered BAM file
 * HW10 contains a makefile and a markdown report for generating a variant call file 
+* HW11 contains a makefile and a markdown report for Establish the effects of variants
