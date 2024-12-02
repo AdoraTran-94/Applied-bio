@@ -1,4 +1,4 @@
-## Write the design file
+# Write the design file
 ````
 bio search PRJNA507275 -H --csv > design.csv
 ````
@@ -43,7 +43,6 @@ Remove the --dry-run flag and execute the pipeline.
   cat design.csv | head -25 | \
     parallel --lb -j 4 --colsep , --header : \
     make all SRR={run_accession} SAMPLE={library_name}
-
 ````
 
 ## Merge the vcf files into one:
@@ -76,101 +75,82 @@ Downloading the reference and indexing it is a one-time operation. We do not nee
 ````
 make bam
 ````
-Then, we process all the samples.
+Then, we process all the samples use makefile.
+
+## Variant Calling Workflow Makefile Documentation
+
+### Description
+This Makefile is designed to automate the process of SNP (Single Nucleotide Polymorphism) calling using sequencing data from *Drosophila melanogaster*. It retrieves the reference genome and sequencing reads, aligns the reads to the genome, and calls variants. The pipeline includes the following key steps:
+
+1. **Download the reference genome and annotations** using NCBI Datasets.
+2. **Index the reference genome** using BWA.
+3. **Download sequencing reads** from the SRA database.
+4. **Align sequencing reads** to the reference genome to produce a BAM file.
+5. **Call variants** from the BAM file using bcftools.
+
+---
+
+## Makefile Variables
+
+| Variable  | Description                                     | Example Value                      |
+|-----------|-------------------------------------------------|------------------------------------|
+| `ACC`     | Genome accession number                        | `GCF_000001215.4`                 |
+| `REF`     | Path to the reference genome file              | `refs/fly.fa`                     |
+| `GFF`     | Path to the genome annotation (GFF file)       | `refs/fly.gff`                    |
+| `SRR`     | Sequencing read accession number               | `SRR12141220`                     |
+| `N`       | Number of reads to retrieve                    | `5000`                            |
+| `SAMPLE`  | Sample name                                    | `SAMN15430431`                    |
+| `R1`      | Path to the first read file                    | `reads/SAMN15430431_1.fastq`      |
+| `R2`      | Path to the second read file (if paired-end)   | `reads/SAMN15430431_2.fastq`      |
+| `BAM`     | Path to the resulting BAM file                 | `bam/SAMN15430431.bam`            |
+| `VCF`     | Path to the resulting compressed VCF file      | `vcf/SAMN15430431.vcf.gz`         |
+
+---
+
+## Targets
+
+| Target   | Description                                    |
+|----------|------------------------------------------------|
+| `usage`  | Print help information about the Makefile.     |
+| `bam`    | Generate a BAM file from sequencing reads.     |
+| `vcf`    | Call variants from the BAM file.               |
+| `all`    | Run the entire workflow (bam + vcf).           |
+| `clean`  | Remove all generated files.                    |
+
+---
+
+## Workflow
+
+### Step 1: Download Reference Genome and Annotations
+The reference genome and annotations are downloaded using NCBI Datasets CLI. The genome is saved as `refs/fly.fa` and the annotations as `refs/fly.gff`.
+
+### Step 2: Index the Reference Genome
+The reference genome is indexed with BWA to prepare for read alignment.
+
+### Step 3: Download Sequencing Reads
+Reads are retrieved from the SRA database using the accession number (`SRR`). If paired-end reads exist, both `R1` and `R2` are downloaded.
+
+### Step 4: Align Reads to the Reference Genome
+Reads are aligned to the reference genome using BWA. The resulting alignments are sorted and indexed into a BAM file (`bam/SAMN15430431.bam`).
+
+### Step 5: Call Variants
+Variants are called from the BAM file using bcftools. The output is stored as a compressed VCF file (`vcf/SAMN15430431.vcf.gz`).
+
+---
+
+## How to Run the Workflow
+
+1. **Check Dependencies**: Ensure the following tools are installed:
+   - `datasets`
+   - `bwa`
+   - `samtools`
+   - `bcftools`
+
+2. **Run the Entire Workflow**:
 ````
-#
-# Variant calling workflow.
-#
-
-# Accession number of the ebola genome.
-ACC=GCA_000848505
-
-# The reference file.
-REF=refs/ebola-1976.fa
-
-# The GFF file.
-GFF=refs/ebola-1976.gff
-
-# The sequencing read accession number.
-SRR=SRR1553425
-
-# The number of reads to get
-N=5000
-
-# The name of the sample (see: bio search SRR1553425)
-SAMPLE=EM110
-
-# The path to read 1
-R1=reads/${SAMPLE}_1.fastq
-
-# The path to read 2
-R2=reads/${SAMPLE}_2.fastq
-
-# The resulting BAM file.
-BAM=bam/${SAMPLE}.bam
-
-# The resulting variant VCF file (compressed!).
-VCF=vcf/${SAMPLE}.vcf.gz
-
-# Custom makefile settings.
-SHELL = bash
-.ONESHELL:
-.SHELLFLAGS = -eu -o pipefail -c
-.DELETE_ON_ERROR:
-MAKEFLAGS += --warn-undefined-variables
-MAKEFLAGS += --no-builtin-rules
-
-# Print the usage of the makefile.
-usage:
-    @echo "#"
-    @echo "# SNP call demonstration"
-    @echo "#"
-    @echo "# ACC=${ACC}"
-    @echo "# SRR=${SRR}"
-    @echo "# SAMPLE=${SAMPLE}"
-    @echo "# BAM=${BAM}"
-    @echo "# VCF=${VCF}"
-    @echo "#"
-    @echo "# make bam|vcf|all"
-    @echo "#"
-
-# Check that the bio toolbox is installed.
-CHECK_FILE = src/run/genbank.mk
-${CHECK_FILE}:
-    @echo "#"
-    @echo "# Please install toolbox with: bio code"
-    @echo "#"
-    @exit 1
-
-# Create the BAM alignment file.
-bam: ${CHECK_FILE}
-    # Get the reference genome and the annotations.
-    make -f src/run/datasets.mk ACC=${ACC} REF=${REF} GFF=${GFF} run
-
-    # Index the reference genome.
-    make -f src/run/bwa.mk REF=${REF} index
-
-    # Download the sequence data.
-    make -f src/run/sra.mk SRR=${SRR} R1=${R1} R2=${R2} N=${N} run
-
-    # Align the reads to the reference genome. 
-    # Use a sample name in the readgroup.
-    make -f src/run/bwa.mk SM=${SAMPLE} REF=${REF} R1=${R1} R2=${R2} BAM=${BAM} run stats
-
-# Call the SNPs in the resulting BAM file.
-vcf:
-    make -f src/run/bcftools.mk REF=${REF} BAM=${BAM} VCF=${VCF} run
-
-# Run all the steps.
-all: bam vcf
-
-# Remove all the generated files.
-clean:
-    rm -rf ncbi_dataset/data/${ACC}
-    rm -rf ${REF} ${GFF} ${R1} ${R2} ${BAM} ${VCF}
-
-# These targets do not correspond to files.
-.PHONY: bam vcf all usage clean
+   make all
 ````
-# Discussion about the VCF file.
-
+## Discussion of the VCF File
+- The VCF file generated provides an overview of the genomic variants detected in the sample compared to the reference genome of Drosophila melanogaster. The metadata section confirms the use of the VCFv4.2 standard, with variants called using bcftools mpileup. The reference genome used, refs/fly.fa, includes multiple contigs, such as NC_004354.4, with a length of over 23 million bases, suggesting a comprehensive dataset.
+- The header mentions that all variants passed quality filters (FILTER=PASS), implying a robust dataset. Metrics like INFO/AD and FORMAT/DP provide details about allele depth and read depth, which are critical for assessing the reliability of each variant.
+- The VCF file also summarizes genetic variants in samples aligned to reference genome NC_004354.4. These include single nucleotide variants (SNVs) and insertions/deletions (INDELs). SNVs, like a C>A mutation at position 202229, dominate the data and reveal genetic differences. INDELs, such as CCTG>C at position 349704, suggest structural changes in the genome. These annotations, supported by metrics like mapping quality (MQ) and allele depths (AD), provide insights into genomic variation and the potential functional impact of these mutations.
