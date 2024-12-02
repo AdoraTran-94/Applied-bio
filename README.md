@@ -1,6 +1,6 @@
 # Applied_Bioinformatics BMMB852
 ## Fall 2024 BMMB 852 Applied Bioinformatics Class Coding projects.
-* HW2 contains .txt and .md files for demonstrating data analysis using UNIX command lines and producing results. 
+* HW2 contains .txt and .md files to demonstrate data analysis using UNIX command lines and produce results. 
 *	HW3 contains a markdown report for Downloading, Generating, and Visualizing GFF files in IGV.
 *	HW4 contains scripts and markdown reports for Scripting and Sequence Ontologies.
 *	HW5 contains a script and a markdown report for Simulating FASTQ files.
@@ -9,4 +9,5 @@
 * HW8 contains a makefile and a markdown report for Generating a BAM alignment file between simulated reads and a reference genome.
 * HW9 contains a makefile and a markdown report for using samtools commands to extract specific statistics and creating a filtered BAM file
 * HW10 contains a makefile and a markdown report for generating a variant call file 
-* HW11 contains a makefile and a markdown report for Establish the effects of variants
+* HW11 contains a makefile and a markdown report for establishing the effects of variants
+* HW12 contains a makefile, a markdown report, and a design file for generating variants using Automation with Parallel
