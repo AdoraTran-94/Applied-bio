@@ -1,7 +1,6 @@
 #
 # Variant calling workflow.
 #
-
 # Accession number of the Drosophila meganogaster genome.
 ACC=GCF_000001215.4
 
@@ -42,44 +41,52 @@ MAKEFLAGS += --no-builtin-rules
 
 # Print the usage of the makefile.
 usage:
-		@echo "#"
-		@echo "# SNP call demonstration"
-		@echo "#"
-		@echo "# ACC=${ACC}"
-		@echo "# SRR=${SRR}"
-		@echo "# SAMPLE=${SAMPLE}"
-		@echo "# BAM=${BAM}"
-		@echo "# VCF=${VCF}"
-		@echo "#"
-		@echo "# make bam|vcf|all"
-		@echo "#"
+	@echo "#"
+	@echo "# SNP call demonstration"
+	@echo "#"
+	@echo "# ACC=${ACC}"
+	@echo "# SRR=${SRR}"
+	@echo "# SAMPLE=${SAMPLE}"
+	@echo "# BAM=${BAM}"
+	@echo "# VCF=${VCF}"
+	@echo "#"
+	@echo "# make bam|vcf|all"
+	@echo "#"
 
 # Check that the bio toolbox is installed.
 CHECK_FILE = src/run/genbank.mk
 ${CHECK_FILE}:
-		@echo "#"
-		@echo "# Please install toolbox with: bio code"
-		@echo "#"
-		@exit 1
+	@echo "#"
+	@echo "# Please install toolbox with: bio code"
+	@echo "#"
+	@exit 1
 
-# Create the BAM alignment file.
+
+# Download the sequence data & Create the BAM alignment file..
 bam: ${CHECK_FILE}
-		# Get the reference genome and the annotations.
-		make -f src/run/datasets.mk ACC=${ACC} REF=${REF} GFF=${GFF} run
+	# Get the reference genome and annotations.
+	make -f src/run/datasets.mk ACC=${ACC} REF=${REF} GFF=${GFF} run
 
-		# Index the reference genome.
-		make -f src/run/bwa.mk REF=${REF} index
+	# Index the reference genome.
+	make -f src/run/bwa.mk REF=${REF} index
 
-		# Download the sequence data.
-		make -f src/run/sra.mk SRR=${SRR} R1=${R1} R2=${R2} N=${N} run
+	# Download the sequence data.
+	make -f src/run/sra.mk SRR=${SRR} R1=${R1} N=${N} run
+	if [ -f "${R2}" ]; then \
+		make -f src/run/sra.mk SRR=${SRR} R2=${R2} N=${N} run; \
+	fi
 
-		# Align the reads to the reference genome. 
-		# Use a sample name in the readgroup.
-		make -f src/run/bwa.mk SM=${SAMPLE} REF=${REF} R1=${R1} R2=${R2} BAM=${BAM} run stats
+	# Align the reads to the reference genome.
+	if [ -f "${R2}" ]; then \
+		make -f src/run/bwa.mk SM=${SAMPLE} REF=${REF} R1=${R1} R2=${R2} BAM=${BAM} run stats; \
+	else \
+		make -f src/run/bwa.mk SM=${SAMPLE} REF=${REF} R1=${R1} BAM=${BAM} run stats; \
+	fi
 
 # Call the SNPs in the resulting BAM file.
 vcf:
 		make -f src/run/bcftools.mk REF=${REF} BAM=${BAM} VCF=${VCF} run
+
 
 # Run all the steps.
 all: bam vcf
