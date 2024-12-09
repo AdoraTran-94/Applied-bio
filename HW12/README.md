@@ -10,8 +10,8 @@ cat design.csv | head -10 | \
 ````
 * If Command 'parallel' not found, but can be installed with:
 ````
-sudo apt install moreutils  # version 0.63-1, or
-sudo apt install parallel   # version 20161222-1.1
+micromamba install moreutils  # version 0.63-1, or
+micromamba install parallel   # version 20161222-1.1
 ````
 * The output:
 ````
@@ -55,8 +55,8 @@ bcftools index merged.vcf.gz
 
 ## Install Missing Dependencies: Ensure bedtools, bedGraphToBigWig, and any other missing tools are installed and accessible:
 ````
-sudo apt-get install bedtools
-sudo apt-get install ucsc-utilities # For bedGraphToBigWig
+micromamba install bedtools
+micromamba install ucsc-utilities # For bedGraphToBigWig
 ````
 
 * 1. Download the UCSC Genome Browser Utilities. You can download the required tool (bedGraphToBigWig) directly from UCSC:
