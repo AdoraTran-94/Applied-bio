@@ -1,4 +1,4 @@
-# Custom makefile settings.
+# Makefile for RNA-Seq count matrix generation
 SHELL = bash
 .ONESHELL:
 .SHELLFLAGS = -eu -o pipefail -c
@@ -7,9 +7,9 @@ MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
 
 # Variables
-ACC=GCF_000859625.1
-REF=refs/rabies.fa
-GTF=refs/rabies.gtf
+ACC=GCF_000001215.4
+REF=refs/fly.fa
+GTF=refs/fly.gtf
 DESIGN=design.csv
 N=5000
 DATA=reads/
