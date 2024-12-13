@@ -1,106 +1,108 @@
+# Custom makefile settings.
+SHELL = bash
+.ONESHELL:
+.SHELLFLAGS = -eu -o pipefail -c
+.DELETE_ON_ERROR:
+MAKEFLAGS += --warn-undefined-variables
+MAKEFLAGS += --no-builtin-rules
+
 # Variables
-ACC=GCF_000001215.4
-REF=genome/genome.fa
-GFF=genome/annotation.gff
+ACC=GCF_000859625.1
+REF=refs/rabies.fa
+GTF=refs/rabies.gtf
+DESIGN=design.csv
+N=5000
+DATA=reads/
+BAM=bam/${SAMPLE}.bam
+COUNTS_TXT=res/counts-hisat.txt
+COUNTS_CSV=res/counts-hisat.csv
+FLAGS=--eta --lb --header : --colsep ,
 
-# Targets to create required directories and download files.
-all: dirs download_genome bam vcf simulate_counts edger evaluate pca heatmap
+# Default target
+usage:
+	@echo "#"
+	@echo "# RNA-Seq count matrix generation"
+	@echo "#"
+	@echo "# ACC=${ACC}"
+	@echo "# REF=${REF}"
+	@echo "# GTF=${GTF}"
+	@echo "# DESIGN=${DESIGN}"
+	@echo "#"
+	@echo "# make design      # create the design.csv file."
+	@echo "# make index       # download the reference data and generate the HISAT2 index."
+	@echo "# make data        # download the sequencing data from design file."
+	@echo "# make align       # run the alignment with SRA from design file by HISAT2."
+	@echo "# make count       # generate the count matrix in CSV format."
+	@echo "# make clean       # clean all files after every run."
+	@echo "# make all         # proceed all the targets."
+	@echo "#"
 
-# Create required directories.
-dirs:
-	mkdir -p refs reads bam vcf results simulations
+# Create the design file
+design:
+	bio search PRJNA588978 -H --csv > ${DESIGN}
+	@echo "Design file created."
 
-# Downloading genome and GTF annotation.
-download_genome:
-		mkdir -p genome
-		wget -O genome/genome.zip "https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_000001215.4/assembly/GCF_000001215.4_Drosophila_melanogaster_genomic.fna.zip"
-		wget -O genome/annotation.zip "https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_000001215.4/annotation/GCF_000001215.4_Drosophila_melanogaster_genomic.gff.zip"
-		unzip genome/genome.zip -d genome
-		unzip genome/annotation.zip -d genome
+# Download the reference data and generate the HISAT2 index
+index:
+	mkdir -p $(dir ${REF})
+	datasets download genome accession ${ACC} --include genome,gtf
+	unzip -n ncbi_dataset.zip -x README.md md5sum.txt
+	cp -f ncbi_dataset/data/${ACC}*/${ACC}*_genomic.fna ${REF}
+	cp -f ncbi_dataset/data/${ACC}*/genomic.gtf ${GTF}
+	make -f src/run/hisat2.mk index REF=${REF}
+	@echo "Genome is indexed. Thank you!"
 
-# Verify that the bio toolbox is installed.
-CHECK_FILE=src/run/genbank.mk
-$(CHECK_FILE):
-		@echo "# Bio toolbox not installed. Please install with: bio code"
-		@exit 1
+# Download the sequencing data from design file
+data: ${DESIGN}
+	mkdir -p $(dir ${DATA})
+	csvcut -c 1 ${DESIGN} | tail -n +2 | head -3 | parallel \
+		"fastq-dump --temp /path/to/larger/tempdir -X ${N} --outdir ${DATA} --split-files {} && \
+		echo 'Downloaded: {}'"
+	@echo "All RNA-seq data are downloaded. Thank you!"
 
-# Generate the BAM file.
-bam: dirs $(CHECK_FILE)
-		# Download and prepare reference genome and annotations.
-		make -f src/run/datasets.mk ACC=${ACC} REF=${REF} GFF=${GFF} run
 
-		# Index the reference genome.
-		make -f src/run/bwa.mk REF=${REF} index
+# Run the alignment with SRA from design file by HISAT2
+align: ${DESIGN}
+	cat ${DESIGN} | head -3 | \
+	parallel --eta --lb --header : --colsep , \
+		"make -f src/run/hisat2.mk \
+		REF=${REF} \
+		R1=reads/{sample}_1.fastq \
+		BAM=bam/{sample}.bam \
+		run || echo 'Error processing sample: {sample}'"
+	@echo "The alignment is completed. Thank you!"
 
-		# Download sequence data.
-		make -f src/run/sra.mk SRR=${SRR} R1=${R1} R2=${R2} N=${N} run
 
-		# Align reads and generate BAM file with sample name in read group.
-		if [ -s ${R2} ]; then \
-			make -f src/run/bwa.mk SM=${SAMPLE} REF=${REF} R1=${R1} R2=${R2} BAM=${BAM} run stats; \
-		else \
-			make -f src/run/bwa.mk SM=${SAMPLE} REF=${REF} R1=${R1} BAM=${BAM} run stats; \
-		fi
+# The counts file
+${COUNTS_TXT}:
+	mkdir -p $(dir $@)
+	cat ${DESIGN} | head -3 | \
+		parallel --header : --colsep , -k echo bam/{sample}.bam | \
+		parallel -u --xargs featureCounts -a ${GTF} -o ${COUNTS_TXT} {}
 
-# Variant calling
-variants:
-		mkdir -p vcf/
-		bcftools mpileup -Ou -f ${REF} ${BAM} | \
-		bcftools call -mv -Ov | \
-		bcftools norm -f ${REF} -Oz -o ${VCF}
-		echo "Variants saved to ${VCF}."
+# Generate the count matrix in CSV format
+${COUNTS_CSV}: ${COUNTS_TXT}
+	micromamba run -n stats Rscript src/r/format_featurecounts.r -c ${COUNTS_TXT} -o ${COUNTS_CSV}
 
-# RNA-Seq count simulations
-simulate_counts:
-		micromamba run -n stats Rscript src/r/simulate_counts.r
-		echo "Checking simulations/ directory contents..."
-		ls -lh simulations
-		if [[ -f "simulations/counts.csv" && -f "simulations/design.csv" ]]; then \
-			echo "Simulation completed. Generated simulations/counts.csv and simulations/design.csv."; \
-		else \
-			echo "Simulation failed: Expected output files missing."; \
-			exit 1; \
-		fi
+# List all count files
+count: ${COUNTS_CSV}
+	@ls -lh ${COUNTS_TXT}
+	@ls -lh ${COUNTS_CSV}
+	@echo "The count matrix files are generated. Thank you!"
 
-# RNA-Seq differential expression
-edger: dirs ${CHECK_FILE} simulate_counts
-		# Run the edgeR analysis
-		micromamba run -n stats Rscript src/r/edger.r -c simulations/counts.csv -d simulations/design.csv -o results/edger.csv
-		echo "Differential expression analysis completed. Results saved to results/edger.csv."
+# Run all the steps
+all: design index data align count
+	@echo "The progress is completed. Thank you!"
 
-# Evaluate results
-evaluate: dirs ${CHECK_FILE} edger
-		# Run the evaluation script
-		micromamba run -n stats Rscript src/r/evaluate_results.r -a simulations/counts.csv -b results/edger.csv
-
-# Generate PCA plot
-pca: dirs ${CHECK_FILE} edger
-		# Generate the PCA plot
-		micromamba run -n stats Rscript src/r/plot_pca.r -c results/edger.csv
-
-# Generate heatmap
-heatmap: dirs ${CHECK_FILE} edger
-		# Generate the heatmap
-		micromamba run -n stats Rscript src/r/plot_heatmap.r -c results/edger.csv
-
-# Clean up generated files
+# Remove all the generated files
 clean:
-	rm -rf genome bam vcf results simulations
+	rm -rf refs/ reads/ bam/ res/ ncbi_dataset/ ncbi_dataset.zip design.csv
 
-# Write the design file
-write_design:
-	bio search PRJNA588978 -H --csv > design.csv
-
-# Run with parallel
-parallelize:
-		cat design.csv | head -10 | \
-		parallel --dry-run --lb -j 4 --colsep , --header : \
-		make all SRR={run_accession} SAMPLE={sample_alias}
-
-run_pipeline:
-		cat design.csv | head -25 | \
-		parallel --lb -j 4 --colsep , --header : \
+# Example for running parallel jobs
+parallel:
+	cat ${DESIGN} | head -3 | \
+		parallel --dry-run --lb -j 4 ${FLAGS} \
 		make all SRR={run_accession} SAMPLE={library_name}
+	@echo "Parallel job dry-run completed. Remove --dry-run to execute."
 
-# Main target to run all steps
-all: dirs download_genome bam vcf simulate_counts edger evaluate pca heatmap
+.PHONY: usage design index data align count clean all parallel
