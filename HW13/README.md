@@ -158,7 +158,7 @@ Run the following Makefile targets to perform various steps in the workflow:
 ## Workflow Steps
 
 ### 1. Create the Design File
-Generate a CSV file listing sequencing runs based on the specified project accession.
+Generating a CSV file listing sequencing runs based on the specified project accession.
 ````
 bio search PRJNA588978 -H --csv > design.csv
 ````
@@ -192,17 +192,16 @@ parallel --eta --lb --header : --colsep , \
     run || echo 'Error processing sample: {sample}'"
 ````
 5. Generate Count Matrix
-Text Format:
+* Text Format:
 ````
 featureCounts -a refs/rabies.gtf -o res/counts-hisat.txt bam/{sample}.bam
 ````
-CSV Format:
+* CSV Format:
 ````
 micromamba run -n stats Rscript src/r/format_featurecounts.r -c res/counts-hisat.txt -o res/counts-hisat.csv
 ````
 6. Clean Up
 Remove all generated files:
-
 ````
 rm -rf refs/ reads/ bam/ res/ ncbi_dataset/ ncbi_dataset.zip design.csv
 ````
