@@ -1,216 +1,246 @@
-## Setting up stats environment to run R via RStudio or at the command line. Then I will end up with several environments:
-````
-•	bioinfo - for bioinformatics tools
-•	stats - for statistical analysis
-•	salmon_env - for running the salmon aligner
-````
-### Creating the stats environment We provide a convenient shortcut to bootstrap your stats environment with:
-````
-# Get the code.
-bio code
+# Week 14: Perform a differential expression analysis 
+## Makefile for RNA-Seq Count Matrix Generation with Detailed Logging
+This Makefile automates the process of generating an RNA-Seq count matrix from sequencing data. It integrates various steps including downloading reference data, aligning reads, generating counts, and performing differential expression analysis.
 
-# Run the script to create the stats environment.
-bash src/setup/init-stats.sh 
-````
-### After completing stats environment, then test.
-````
-micromamba run -n stats Rscript src/setup/doctor.r
-````
-•	It should print:
-````
-# Doctor, Doctor! Give me the R news!
-# Checking DESeq2      ... OK
-# Checking gplots      ... OK
-# Checking biomaRt     ... OK
-# Checking tibble      ... OK
-# Checking dplyr       ... OK
-# Checking tools       ... OK
-# You are doing well, Majesty!
-````
-## Running a single command in stats.
-### Run a single command in the stats environment to activates the stats runs a count simulator, then switches back to bioinfo.
-````
-micromamba run -n stats Rescript src/r/simulate_counts.r
-````
-### If you plan on running multiple commands in stats it is best if to activate environment explicitly:
-````
-# Activate stats environments.
-micromamba activate stats
-
-# Commands now run in stats.
-Rscript src/r/simulate_counts.r
-````
-•	If I want to see usage information by adding the -h (help) option for each R module.
-````
-Rscript src/r/simulate_null.r –h
-````
-•	there is no package called 'edgeR'
-### run the doctor to check:
-````
-src/setup/doctor.r
-````
-### Usually you can avoid having to switch the entire enviroment by running commands with
-````
-micromamba run -n stats my_command_here
-````
-### But if you have to switch environments within a bash shell script then use the following construct:
-````
-# Turn off error checking and tracing.
-set +uex
-# Load the micromamba shell initializer.
-eval "$(micromamba shell hook --shell bash)"
-# Activate the stats environment.
-conda activate stats
-# This command now runs in stats
-echo "Look MA! I am in stats!"
-# Activate the bioinfo environment.
-conda activate bioinfo
-# This command now runs in bioinfo
-echo "Look MA! I am in bioinfo!"
-# Turn the error checking and tracing back on.
-set –uex
-````
-### Creating a custom environment When you know specifically which tools you wish to run you might want to create a custom environment just for those tools. For example, you want to run the hisat2 based pipeline followed by featurecounts and DESeq2 first create a file called requiments.txt that contains one package per line like so:
-````
-nano requiments.txt 
-````
-### Then type the below info., save and exit
-````
-hisat2 
-samtools 
-subread 
-bioconductor-deseq2 
-````
-### then you can create your environment with:
-````
-micromamba create -n rnaseq --file requirements.txt
-````
-•	But once you have the requirements.txt you can recreate the environment on any other computer, and you can run your pipeline with:
-## Activate the environment rnaseq.
-````
-micromamba run -n rnaseq make -f workflow.mk
-````
-### In my environment activate bioinfo
-````
-conda activate bioinfo
-````
-### If I will use RNA-Seq with salmon, I need to run the toolbox recipe:
-````
-# Install the toolbox.
-bio code
-
-# Run the salmon workflow.
-make -f src/recipes/rnaseq-with-salmon.mk 
-````
-### If I will use RNA-Seq with Hisat2, I need to run the toolbox recipe:
-````
-# Install the toolbox.
-bio code
-# Run the hisat2 workflow.
-make -f src/recipes/rnaseq-with-hisat.mk
-````
-
-# RNA-Seq Count Matrix Generation Workflow
-
-## Overview
-
-This document outlines a Makefile-driven workflow for RNA-Seq data analysis, including alignment, quantification, and generation of a count matrix. The workflow uses HISAT2 for alignment and featureCounts for quantification.
-
----
+## Shell Settings
+- **Shell**: Bash
+- **Flags**: 
+  - `-eu`: Exit immediately if a command exits with a non-zero status.
+  - `-o pipefail`: Return the exit status of the last command in the pipeline that failed.
+  - `-c`: Read commands from the command string.
 
 ## Variables
-
-The following variables are configurable:
-
-| **Variable**       | **Description**                                            | **Default Value**             |
-|---------------------|------------------------------------------------------------|--------------------------------|
-| `ACC`              | Genome accession number                                    | `GCF_000001215.4`             |
-| `REF`              | Path to the reference genome FASTA file                    | `refs/fly.fa`              |
-| `GTF`              | Path to the annotation GTF file                            | `refs/fly.gtf`             |
-| `DESIGN`           | CSV file listing sequencing runs                           | `design.csv`                  |
-| `N`                | Number of reads to download                                | `5000`                        |
-| `DATA`             | Directory for sequencing data files                        | `reads/`                      |
-| `BAM`              | Path to the BAM file                                       | `bam/${SAMPLE}.bam`           |
-| `COUNTS_TXT`       | Path to the featureCounts text output                      | `res/counts-hisat.txt`        |
-| `COUNTS_CSV`       | Path to the formatted counts CSV file                      | `res/counts-hisat.csv`        |
-| `FLAGS`            | Parallel execution flags                                   | `--eta --lb --header : --colsep ,` |
-
----
+- **ACC**: Genome accession number (e.g., `GCF_000001215.4`)
+- **REF_DIR**: Directory for reference files.
+- **REF**: Path to the reference genome.
+- **GTF**: Path to the annotation file.
+- **DESIGN**: Design CSV file for sequencing data.
+- **N**: Number of reads to process.
+- **BAM_DIR**: Directory for BAM files.
+- **COUNTS_TXT**: Path to the counts output file in TXT format.
+- **COUNTS_CSV**: Path to the counts output file in CSV format.
+- **SRR**: Sample accession number (e.g., `SRR10505619`).
+- **R1**: Path to the first read FASTQ file.
+- **R2**: Path to the second read FASTQ file.
+- **DE_RESULTS**: Path for differential expression results.
 
 ## Usage
+To use this Makefile, run the following commands:
 
-Run the following Makefile targets to perform various steps in the workflow:
+```bash
+make usage
+```
 
-| **Target**   | **Description**                                                                 |
-|--------------|---------------------------------------------------------------------------------|
-| `usage`      | Print usage instructions for the workflow.                                      |
-| `design`     | Create the `design.csv` file listing sequencing runs.                          |
-| `index`      | Download the reference genome and annotations, and create the HISAT2 index.    |
-| `data`       | Download sequencing data based on the `design.csv` file.                       |
-| `align`      | Perform alignments using HISAT2.                                               |
-| `count`      | Generate the count matrix in text and CSV formats.                             |
-| `all`        | Execute all steps sequentially.                                                |
-| `clean`      | Remove all generated files and directories.                                    |
-| `parallel`   | Example for running parallel jobs (dry-run).                                   |
+### Available Targets
+- **make design**: Create the `design.csv` file.
+- **make index**: Download the reference data and generate the HISAT2 index.
+- **make data**: Download sequencing data from the design file.
+- **make align**: Perform alignment with HISAT2.
+- **make count**: Evaluate the differentially expressed genes.
+- **make evaluate**: Generate the count matrix in CSV format.
+- **make clean**: Clean all generated files.
+- **make all**: Run all steps.
 
----
+## Target Descriptions
 
-## Workflow Steps
+### Check Bio Toolbox Installation
+```makefile
+CHECK_FILE = src/run/genbank.mk
+```
+This target checks if the bio toolbox is installed.
 
-### 1. Create the Design File
-Generate a CSV file listing sequencing runs based on the specified project accession.
+### Index Target
+```makefile
+index: $(REF) $(GTF)
+```
+Downloads reference data and generates the HISAT2 index.
+
+### Data Target
+```makefile
+data: $(DESIGN)
+```
+Downloads sequencing data based on the design file.
+
+### Align Target
+```makefile
+align: $(DESIGN) $(REF) $(DATA_DIR)
+```
+Aligns reads using HISAT2 and saves BAM files.
+
+### Count Target
+```makefile
+count:
+	micromamba run -n stats featureCounts -a $(GTF) -o res/counts.txt $(bam)
+```
+Generates counts matrix from aligned reads.
+
+### Simulate and Differential Expression Analysis
+```makefile
+simulate: 
+```
+Runs simulations and performs differential expression analysis.
+
+### Coverage Target
+```makefile
+coverage:
+```
+Creates a bigwig coverage track from BAM files.
+
+### Evaluate Results
+```makefile
+evaluate:
+```
+Evaluates results and generates plots.
+
+### All Steps Target
+```makefile
+all: index data align count simulate coverage evaluate
+```
+Runs all steps in the pipeline.
+
+### Clean Target
+```makefile
+clean:
+```
+Cleans up all generated files.
+
+### Environment Setup Check
+```makefile
+check_env:
+```
+Checks if the Micromamba environment is set up correctly.
+
+## Conclusion
+This Makefile streamlines the RNA-Seq analysis workflow, allowing for efficient processing of sequencing data. Ensure all dependencies are installed and configured before running the commands.
+
+## First, generate the design.csv file
 ````
 bio search PRJNA588978 -H --csv > design.csv
 ````
-### 2. Download and Index the Reference Genome
-Download the reference genome and GTF file:
+## Then run parallel dry run 
 ````
-datasets download genome accession GCF_000859625.1 --include genome,gtf
-unzip -n ncbi_dataset.zip
-cp -f ncbi_dataset/data/GCF_000001215.4*/GCF_000001215.4*_genomic.fna refs/fly.fa
-cp -f ncbi_dataset/data/GCF_000001215.4*/GCF_000001215.4*/genomic.gtf refs/fly.gtf
-Generate the HISAT2 index:
+	cat design.csv | head -10 | \
+parallel --dry-run -j 4 --colsep , --header : \
+make all SRR={run_accession} SAMPLE={library_name}
 ````
-make -f src/run/hisat2.mk index REF=refs/rabies.fa
-3. Download Sequencing Data
-Download sequencing data as specified in the design.csv file:
+## Here are outputs:
+````
+make all SRR=SRR10505617 SAMPLE=rep5_L2
+make all SRR=SRR10505618 SAMPLE=rep5_L1
+make all SRR=SRR10505621 SAMPLE=rep3_L2
+make all SRR=SRR10505619 SAMPLE=rep4_L2
+make all SRR=SRR10505622 SAMPLE=rep3_L1
+make all SRR=SRR10505626 SAMPLE=rep1_L2
+make all SRR=SRR10429163 SAMPLE=rep1_L1
+make all SRR=SRR10505616 SAMPLE=rep6_L1
+make all SRR=SRR10505620 SAMPLE=rep4_L1
+````
+## Run all the makefile
+````
+make all 
+````
+## Discussion:
+1, After the counting:
+I got 270 genes with FDR in counts.csv file and 19,732 genes without FDR.
+Here are the first 10 genes:
+````
+name,state,FDR,A1,A2,A3,B1,B2,B3
+GENE-127,YES,0,7,7,7,33,18,20
+GENE-155,YES,0,68,60,72,59,73,85
+GENE-199,YES,0,24,16,30,5,4,3
+GENE-333,YES,0,23,21,28,18,39,19
+GENE-892,YES,0,429,409,387,92,83,89
+GENE-1003,YES,0,416,622,631,834,770,1065
+GENE-1017,YES,0,4,11,4,34,58,60
+GENE-1059,YES,0,593,415,539,1495,1996,1725
+GENE-1077,YES,0,39,25,35,55,54,49
+````
+2, Im the counts-hisat.csv.summary
+Here are the outputs
+````
+Status	bam/rep1_L1.bam	bam/rep1_L2.bam	bam/rep3_L1.bam	bam/rep3_L2.bam	bam/rep4_L1.bam	bam/rep4_L2.bam	bam/rep5_L1.bam	bam/rep5_L2.bam	bam/rep6_L1.bam
+Assigned	2191	2191	2191	2191	2191	2191	2191	2191	2191
+Unassigned_Unmapped	2371	2371	2371	2371	2371	2371	2371	2371	2371
+Unassigned_Read_Type	0	0	0	0	0	0	0	0	0
+Unassigned_Singleton	0	0	0	0	0	0	0	0	0
+Unassigned_MappingQuality	0	0	0	0	0	0	0	0	0
+Unassigned_Chimera	0	0	0	0	0	0	0	0	0
+Unassigned_FragmentLength	0	0	0	0	0	0	0	0	0
+Unassigned_Duplicate	0	0	0	0	0	0	0	0	0
+Unassigned_MultiMapping	529	529	529	529	529	529	529	529	529
+Unassigned_Secondary	0	0	0	0	0	0	0	0	0
+Unassigned_NonSplit	0	0	0	0	0	0	0	0	0
+Unassigned_NoFeatures	55	55	55	55	55	55	55	55	55
+Unassigned_Overlapping_Length	0	0	0	0	0	0	0	0	0
+Unassigned_Ambiguity	222	222	222	222	222	222	222	222	222
+````
+The output summarizes how reads from your RNA-seq data were classified by the featureCounts program.
+In short, most reads were successfully assigned to genes, while a smaller number faced issues related to mapping or ambiguity.
+1) Assigned:
+2191 reads were successfully mapped to features (genes) across all BAM files.
+2) Unassigned Reads:
+Unmapped: 2371 reads couldn't be mapped to the genome.
+Read Type: No reads were excluded due to type issues.
+Singletons: No single reads were found without their pair.
+Mapping Quality: All reads met the quality threshold.
+Chimeric: No chimeric reads were detected.
+Fragment Length: No reads were filtered out based on length.
+Duplicates: No duplicate reads were identified.
+Multi-Mapping: 529 reads mapped to multiple locations.
+Secondary: No secondary alignments were present.
+Non-Split: No non-split reads were found.
+No Features: 55 reads did not match any features.
+Ambiguity: 222 reads were ambiguous in their mapping.
 
+3) When I ran the "simulate" command using "Rscript src/r/simulate_counts.r" in stats environment, I got this result:
 ````
-csvcut -c 1 design.csv | tail -n +2 | head -3 | parallel \
-    "fastq-dump --temp /path/to/larger/tempdir -X ${N} --outdir reads/ --split-files {}"
+# Initializing  PROPER ... done
+# PROspective Power Evaluation for RNAseq 
+# Error level: 1 (bottomly)
+# All genes: 20000 
+# Genes with data: 4665 
+# Genes that changed: 1000 
+# Changes we can detect: 235 
+# Replicates: 3 
+# Design: design.csv 
+# Counts: counts.csv 
 ````
-4. Align Reads
-Align the RNA-Seq reads to the reference genome using HISAT2:
+For this Evaluation, it indicates that while many genes were assessed, only a small number of changes can be confidently detected.
+Initialization: Successfully started the analysis.
+Type: PROspective Power Evaluation for RNA-seq.
+Error Level: Set at 1 (Bottomly).
+Total Genes: 20,000 genes in the dataset.
+Genes with Data: Data available for 4,665 genes.
+Genes That Changed: 1,000 genes showed changes in expression.
+Detectable Changes: Can reliably detect 235 changes.
+Replicates: 3 biological replicates were used.
+Design File: Referenced in design.csv.
+Counts File: Data sourced from counts.csv.
 
+4) I got a bug in the evaluate for Rscript src/r/edger.r and because of that I do not have edger.r to do more analysis. I did try different approaches however, I could not solve this problem. I first tried to run it in my makefile and I did not work and then I tried to run it separately in Terminal 
+With the "Rscript src/r/edger.r", I got this error
 ````
-cat design.csv | head -3 | \
-parallel --eta --lb --header : --colsep , \
-    "make -f src/run/hisat2.mk \
-    REF=refs/rabies.fa \
-    R1=reads/{sample}_1.fastq \
-    BAM=bam/{sample}.bam \
-    run || echo 'Error processing sample: {sample}'"
+# Initializing edgeR tibble dplyr tools ... done
+# Tool: edgeR 
+# Design: design.csv 
+# Counts: counts-hisat.csv 
+# Sample column: sample 
+# Factor column: group 
+# Factors: A B 
+# Group A has 3 samples.
+# Group B has 3 samples.
+Error in `[.data.frame`(counts_df, , sample_names) : 
+  undefined columns selected
+Calls: [ -> [.data.frame
+Execution halted
 ````
-5. Generate Count Matrix
-Text Format:
+Without "edgeR.r", I could not make plot and heatmap for this analysis. I will try to find a solution to troubleshoot this problem since I have been working on this makefile for 3 days, I could not finish it better.
 ````
-featureCounts -a refs/rabies.gtf -o res/counts-hisat.txt bam/{sample}.bam
+Rscript  src/r/evaluate_results.r  -a counts.csv -b edger.csv
+Error in file(file, "rt") : cannot open the connection
+Calls: read.csv -> read.table -> file
+In addition: Warning message:
+In file(file, "rt") :
+  cannot open file 'edger.csv': No such file or directory
+Execution halted
 ````
-CSV Format:
-````
-micromamba run -n stats Rscript src/r/format_featurecounts.r -c res/counts-hisat.txt -o res/counts-hisat.csv
-````
-6. Clean Up
-Remove all generated files:
-
-````
-rm -rf refs/ reads/ bam/ res/ ncbi_dataset/ ncbi_dataset.zip design.csv
-````
-Notes
-Disk Space: Ensure sufficient disk space for temporary files during download and processing.
-Temporary Directory: You can specify a larger temporary directory for fastq-dump using the --temp flag.
-Environment Management: Use micromamba for managing dependencies for R scripts and HISAT2 commands.
-
-----
-## Discussion: 
-Because my disk space is not enough so I still cannot run it successfully and it got stucked at the align. I will update it as soon as possible
