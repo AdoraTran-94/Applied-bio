@@ -19,8 +19,8 @@ BAM_DIR = bam
 SAMPLE = rep4_L2
 BAM = bam/${SAMPLE}.bam
 bam = bam/*.bam
-COUNTS_TXT = res/counts.txt = res/counts-hisat.txt
-COUNTS_CSV = res/counts.csv = res/counts-hisat.cvs
+COUNTS_TXT = res/counts-hisat.txt
+COUNTS_CSV = res/counts-hisat.cvs
 SRR = SRR10505619
 R1 = reads/read1.fastq
 R2 = reads/read2.fastq
@@ -96,10 +96,10 @@ count:
 	mkdir -p res
 	featureCounts -a ${GTF} -o ${COUNTS_TXT} ${BAM}
 	@echo "Running featureCounts on BAM files: $(bam)..."
-	micromamba run -n stats featureCounts -a refs/GCF_000001215.4.gtf -o res/counts.txt $(bam) || { echo "featureCounts failed"; exit 1; }
+	micromamba run -n stats featureCounts -a refs/GCF_000001215.4.gtf -o ${COUNTS_TXT} $(bam) || { echo "featureCounts failed"; exit 1; }
 	@echo "Counts file generated at res/counts.txt."
 	@echo "Converting counts to CSV format..."
-	micromamba run -n stats Rscript src/r/format_featurecounts.r -c res/counts.txt -o res/counts.csv || { echo "Conversion to CSV failed"; exit 1; }
+	micromamba run -n stats Rscript src/r/format_featurecounts.r -c ${COUNTS_TXT} -o ${COUNTS_CSV} || { echo "Conversion to CSV failed"; exit 1; }
 	@echo "Count matrix CSV saved at res/counts.csv."
 
 #Simulate one maxtrix & Perform differential expression analysis
@@ -107,7 +107,7 @@ simulate:
 	# generate_counts:
 	# Command to create counts-hisat.csv
 	# For example, if you need to run featureCounts or a similar command:
-	micromamba run -n stats featureCounts -a refs/GCF_000001215.4.gtf -o counts-hisat.csv $(bam)
+	micromamba run -n stats featureCounts -a refs/GCF_000001215.4.gtf -o ${COUNTS_CSV} $(bam)
 	@if [ ! -f counts-hisat.csv ]; then \
 		echo "Error: counts-hisat.csv not found."; \
 		exit 1; \
