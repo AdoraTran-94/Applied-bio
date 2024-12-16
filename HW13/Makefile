@@ -94,7 +94,7 @@ $(COUNTS_TXT): $(DESIGN)
 	@echo "Counts file generated at $(COUNTS_TXT)."
 
 # Generate counts-hisat.txt from BAM files
-$(COUNTS_TXT): $(DESIGN) $(BAM_DIR)
+$(COUNTS_TXT): $(DESIGN) $(BAM_DIR) $(GTF)
 	mkdir -p $(RES_DIR)
 	micromamba run -n stats featureCounts -p -a $(GTF) -o $(COUNTS_TXT) $(BAM_DIR)/*.bam
 	@echo "Counts file generated at $(COUNTS_TXT)."
@@ -108,8 +108,20 @@ $(COUNTS_CSV): $(COUNTS_TXT)
 # Generate count matrix and list files
 .PHONY: count
 count: $(COUNTS_CSV)
-	ls -lh $(COUNTS_TXT) || echo "Counts TXT file not found."
-	ls -lh $(COUNTS_CSV) || echo "Counts CSV file not found."
+	@if [[ -f $(COUNTS_TXT) ]]; then \
+		echo "$(COUNTS_TXT) found:"; \
+		ls -lh $(COUNTS_TXT); \
+	else \
+		echo "Error: Counts TXT file not found."; \
+		exit 1; \
+	fi
+	@if [[ -f $(COUNTS_CSV) ]]; then \
+		echo "$(COUNTS_CSV) found:"; \
+		ls -lh $(COUNTS_CSV); \
+	else \
+		echo "Error: Counts CSV file not found."; \
+		exit 1; \
+	fi
 	@echo "Count matrix files generated successfully."
 
 # Run all steps
