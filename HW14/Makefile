@@ -1,4 +1,6 @@
-# Enhanced Makefile for Differential Expression Analysis of RNA-Seq Count Matrix
+# Makefile for RNA-Seq count matrix generation with detailed logging
+
+# Shell settings
 SHELL = bash
 .ONESHELL:
 .SHELLFLAGS = -eu -o pipefail -c
@@ -9,19 +11,18 @@ MAKEFLAGS += --no-builtin-rules
 # Variables
 ACC = GCF_000001215.4
 REF_DIR = refs
-REF = $(REF_DIR)/fly.fa
-GTF = $(REF_DIR)/fly.gtf
+REF = refs/${ACC}.fa
+GTF = refs/${ACC}.gtf
 DESIGN = design.csv
 N = 5000
-DATA_DIR = reads
 BAM_DIR = bam
-RES_DIR = res
-COUNTS_TXT = $(RES_DIR)/counts-hisat.txt
-COUNTS_CSV = $(RES_DIR)/counts-hisat.csv
+COUNTS_TXT = res/counts.txt
+COUNTS_CSV = res/counts.csv
+SRR = SRR10505619
+R1 = reads/read1.fastq
+R2 = reads/read2.fastq
 DE_RESULTS = $(RES_DIR)/edger.csv
-PCA_PLOT = $(RES_DIR)/pca_plot.png
-HEATMAP = $(RES_DIR)/heatmap.png
-VOLCANO_PLOT = $(RES_DIR)/volcano_plot.png
+
 
 # Flags for GNU Parallel
 PARALLEL_FLAGS = --eta --lb --header : --colsep ,
@@ -29,7 +30,7 @@ PARALLEL_FLAGS = --eta --lb --header : --colsep ,
 # Default target
 .PHONY: usage
 usage:
-	@echo "# RNA-Seq differential expression analysis pipeline"
+	@echo "# RNA-Seq count matrix generation"
 	@echo "# ACC=$(ACC)"
 	@echo "# REF=$(REF)"
 	@echo "# GTF=$(GTF)"
@@ -39,22 +40,18 @@ usage:
 	@echo "# make index       # Download the reference data and generate the HISAT2 index."
 	@echo "# make data        # Download sequencing data from the design file."
 	@echo "# make align       # Perform alignment with HISAT2."
-	@echo "# make count       # Generate the count matrix in CSV format."
-	@echo "# make analyze     # Perform differential expression analysis."
-	@echo "# make pca         # Generate PCA plot."
-	@echo "# make heatmap     # Generate heatmap of differentially expressed genes."
-	@echo "# make volcano     # Generate volcano plot (TODO)."
-	@echo "# make all         # Run all steps."
+	@echo "# make count       # Generate the count matrix"
+	@echo "# make simulate    # Simulate another matrix"       
+	@echo "# make coverage    # Check on the coverage of RNAseq"      
+	@echo "# make evaluate    # Evaluate the differentially expressed genes."
 	@echo "# make clean       # Clean all generated files."
+	@echo "# make all         # Run all steps."
 
-# Create the design file
-.PHONY: design
-design:
-	mkdir -p $(dir $(DESIGN))
-	bio search PRJNA588978 -H --csv > $(DESIGN)
-	@echo "Design file created at $(DESIGN)."
-
-
+# Check if the bio toolbox is installed.
+CHECK_FILE = src/run/genbank.mk
+${CHECK_FILE}:
+	@echo "# Please install toolbox with: bio code"
+	@exit 1
 
 
 # Download the reference data and generate the HISAT2 index
@@ -77,104 +74,60 @@ $(GTF):
 # Download sequencing data
 .PHONY: data
 data: $(DESIGN)
-	mkdir -p $(DATA_DIR)
-	csvcut -c 1 $(DESIGN) | tail -n +2 | head -3 | \
-		parallel -j 4 "fastq-dump -X $(N) --outdir $(DATA_DIR) --split-files {} && echo 'Downloaded: {}'"
-	@echo "RNA-seq data downloaded to $(DATA_DIR)."
+	make -f src/run/sra.mk SRR=${SRR} R1=${R1} N=${N} run
+	@echo "RNA-seq data downloaded"
 
 # Align reads with HISAT2
 .PHONY: align
 align: $(DESIGN) $(REF) $(DATA_DIR)
 	mkdir -p $(BAM_DIR)
-	csvcut -c 1 $(DESIGN) | tail -n +2 | head -3 | parallel -j 4 \
-		'if [[ -f $(DATA_DIR)/{}_1.fastq && -f $(DATA_DIR)/{}_2.fastq ]]; then \
-			make -f src/run/hisat2.mk REF=$(REF) R1=$(DATA_DIR)/{}_1.fastq R2=$(DATA_DIR)/{}_2.fastq BAM=$(BAM_DIR)/{}.bam run; \
-		else \
-			echo "FASTQ files for sample {} are missing. Skipping..."; \
-		fi'
+	make -f src/run/hisat2.mk \
+			REF=${REF} R1=${R1} BAM=${BAM} \
+			run
 	@echo "Alignments completed. BAM files saved in $(BAM_DIR)."
 
-# Generate count matrix
-$(COUNTS_TXT): $(DESIGN) $(BAM_DIR) $(GTF)
-	mkdir -p $(RES_DIR)
-	micromamba run -n stats featureCounts -p -a $(GTF) -o $(COUNTS_TXT) $(BAM_DIR)/*.bam
-	@echo "Counts file generated at $(COUNTS_TXT)."
 
-$(COUNTS_CSV): $(COUNTS_TXT)
-	@echo "Converting counts to CSV format..."
-	micromamba run -n stats Rscript src/r/format_featurecounts.r -c $(COUNTS_TXT) -o $(COUNTS_CSV)
-	@echo "Count matrix CSV saved at $(COUNTS_CSV)."
-
+# Generate counts matrix
 .PHONY: count
-count: $(COUNTS_CSV)
-	@if [[ -f $(COUNTS_TXT) ]]; then \
-		echo "$(COUNTS_TXT) found:"; \
-		ls -lh $(COUNTS_TXT); \
-	else \
-		echo "Error: Counts TXT file not found."; \
-		exit 1; \
-	fi
-	@if [[ -f $(COUNTS_CSV) ]]; then \
-		echo "$(COUNTS_CSV) found:"; \
-		ls -lh $(COUNTS_CSV); \
-	else \
-		echo "Error: Counts CSV file not found."; \
-		exit 1; \
-	fi
-	@echo "Count matrix files generated successfully."
+count:
+	micromamba run -n stats featureCounts -a $(GTF) -o res/counts.txt $(bam)
+	echo "Counts file generated at res/counts.txt."
+	echo "Converting counts to CSV format..."
+	micromamba run -n stats Rscript src/r/format_featurecounts.r -c res/counts.txt -o res/counts.csv
+	echo "Count matrix CSV saved at res/counts.csv."
+	ls -lh res/counts.txt; \
+	ls -lh res/counts.csv;
 
-.PHONY: validate_design
-validate_design: $(DESIGN)
-	@if ! csvcut -n $(DESIGN) | grep -q 'sample'; then \
-		echo "Error: 'sample' column not found in $(DESIGN). Please add a 'sample' column."; \
-		exit 1; \
-	fi
-
-# Perform differential expression analysis
-$(DE_RESULTS): $(COUNTS_CSV)
+#Simulate one maxtrix & Perform differential expression analysis
+simulate: 
+	@echo "Running Simulate one maxtrix..."
+	micromamba run -n stats Rscript src/r/simulate_counts.r
 	@echo "Running differential expression analysis..."
-	micromamba run -n stats Rscript src/r/edger.r -c $(COUNTS_CSV) -d $(DESIGN) -o $(DE_RESULTS)
-	@echo "Differential expression results saved at $(DE_RESULTS)."
+	micromamba run -n stats Rscript src/r/edger.r
 
-.PHONY: analyze
-analyze: $(DE_RESULTS)
-	@echo "Differential expression analysis completed."
+# Creating a bigwig coverage track from a BAM file
+coverage:
+	make -f src/run/wiggle.mk \
+			REF=${REF} BAM=${BAM} \
+			run
 
-# Generate PCA plot
-$(PCA_PLOT): $(DE_RESULTS)
-	@echo "Generating PCA plot..."
-	micromamba run -n stats Rscript src/r/plot_pca.r -c $(DE_RESULTS) -o $(PCA_PLOT)
-	@echo "PCA plot saved at $(PCA_PLOT)."
-
-.PHONY: pca
-pca: $(PCA_PLOT)
-	@echo "PCA plot generated successfully."
-
-# Generate heatmap
-$(HEATMAP): $(DE_RESULTS)
-	@echo "Generating heatmap..."
-	micromamba run -n stats Rscript src/r/plot_heatmap.r -c $(DE_RESULTS) -o $(HEATMAP)
-	@echo "Heatmap saved at $(HEATMAP)."
-
-.PHONY: heatmap
-heatmap: $(HEATMAP)
-	@echo "Heatmap generated successfully."
-
-# Generate volcano plot (TODO)
-.PHONY: volcano
-volcano:
-	@echo "Generating volcano plot (TODO)."
+# Evaluate the results
+.PHONY: evaluate
+evaluate:
+	micromamba run -n stats Rscript src/r/evaluate_results.r -a res/counts-hisat.csv -b edger.csv || { echo "Error during evaluation. Check the R script for missing columns."; exit 1; }
+	cat edger.csv | cut -f 1 -d , | head -10
+	micromamba run -n stats Rscript src/r/plot_pca.r -c edger.csv
+	micromamba run -n stats Rscript src/r/plot_heatmap.r -c edger.csv
 
 # Run all steps
 .PHONY: all
-all: design validate_design index data align count analyze pca heatmap
+all: index data align count simulate coverage evaluate
 	@echo "All steps completed successfully!"
 
 # Cleanup generated files
 .PHONY: clean
 clean:
-	rm -rf $(REF_DIR) $(DATA_DIR) $(BAM_DIR) $(RES_DIR) ncbi_dataset ncbi_dataset.zip $(DESIGN)
-	@echo "Cleaned up all generated files."
+	rm -rf $(REF_DIR) $(DATA_DIR) $(BAM_DIR) $(RES_DIR) design.csv
 
 # Environment setup check
 .PHONY: check_env
