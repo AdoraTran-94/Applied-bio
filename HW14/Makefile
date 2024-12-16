@@ -16,8 +16,11 @@ GTF = refs/${ACC}.gtf
 DESIGN = design.csv
 N = 5000
 BAM_DIR = bam
-COUNTS_TXT = res/counts.txt
-COUNTS_CSV = res/counts.csv
+SAMPLE = rep4_L2
+BAM = bam/${SAMPLE}.bam
+bam = bam/*.bam
+COUNTS_TXT = res/counts.txt = res/counts-hisat.txt
+COUNTS_CSV = res/counts.csv = res/counts-hisat.cvs
 SRR = SRR10505619
 R1 = reads/read1.fastq
 R2 = reads/read2.fastq
@@ -40,10 +43,10 @@ usage:
 	@echo "# make index       # Download the reference data and generate the HISAT2 index."
 	@echo "# make data        # Download sequencing data from the design file."
 	@echo "# make align       # Perform alignment with HISAT2."
-	@echo "# make count       # Generate the count matrix"
-	@echo "# make simulate    # Simulate another matrix"       
-	@echo "# make coverage    # Check on the coverage of RNAseq"      
+	@echo "# make count       # Generate the count matrix in CSV format."
+	@echo "# make simulate    # Simulate another matrix"           
 	@echo "# make evaluate    # Evaluate the differentially expressed genes."
+	@echo "# make evaluate    
 	@echo "# make clean       # Clean all generated files."
 	@echo "# make all         # Run all steps."
 
@@ -90,38 +93,41 @@ align: $(DESIGN) $(REF) $(DATA_DIR)
 # Generate counts matrix
 .PHONY: count
 count:
-	micromamba run -n stats featureCounts -a $(GTF) -o res/counts.txt $(bam)
-	echo "Counts file generated at res/counts.txt."
-	echo "Converting counts to CSV format..."
-	micromamba run -n stats Rscript src/r/format_featurecounts.r -c res/counts.txt -o res/counts.csv
-	echo "Count matrix CSV saved at res/counts.csv."
-	ls -lh res/counts.txt; \
-	ls -lh res/counts.csv;
+	mkdir -p res
+	featureCounts -a ${GTF} -o ${COUNTS_TXT} ${BAM}
+	@echo "Running featureCounts on BAM files: $(bam)..."
+	micromamba run -n stats featureCounts -a refs/GCF_000001215.4.gtf -o res/counts.txt $(bam) || { echo "featureCounts failed"; exit 1; }
+	@echo "Counts file generated at res/counts.txt."
+	@echo "Converting counts to CSV format..."
+	micromamba run -n stats Rscript src/r/format_featurecounts.r -c res/counts.txt -o res/counts.csv || { echo "Conversion to CSV failed"; exit 1; }
+	@echo "Count matrix CSV saved at res/counts.csv."
 
 #Simulate one maxtrix & Perform differential expression analysis
 simulate: 
-	@echo "Running Simulate one maxtrix..."
-	micromamba run -n stats Rscript src/r/simulate_counts.r
-	@echo "Running differential expression analysis..."
-	micromamba run -n stats Rscript src/r/edger.r
+	# generate_counts:
+	# Command to create counts-hisat.csv
+	# For example, if you need to run featureCounts or a similar command:
+	micromamba run -n stats featureCounts -a refs/GCF_000001215.4.gtf -o counts-hisat.csv $(bam)
+	@if [ ! -f counts-hisat.csv ]; then \
+		echo "Error: counts-hisat.csv not found."; \
+		exit 1; \
+	fi
+	# Continue with simulation commands...
+	echo "Running simulation with counts-hisat.csv..."
+	# Your simulation commands here
 
-# Creating a bigwig coverage track from a BAM file
-coverage:
-	make -f src/run/wiggle.mk \
-			REF=${REF} BAM=${BAM} \
-			run
 
 # Evaluate the results
 .PHONY: evaluate
 evaluate:
-	micromamba run -n stats Rscript src/r/evaluate_results.r -a res/counts-hisat.csv -b edger.csv || { echo "Error during evaluation. Check the R script for missing columns."; exit 1; }
+	micromamba run -n stats Rscript src/r/evaluate_results.r -a res/counts.csv -c res/counts-hisat.csv -b edger.csv || { echo "Error during evaluation. Check the R script for missing columns."; exit 1; }
 	cat edger.csv | cut -f 1 -d , | head -10
 	micromamba run -n stats Rscript src/r/plot_pca.r -c edger.csv
 	micromamba run -n stats Rscript src/r/plot_heatmap.r -c edger.csv
 
 # Run all steps
 .PHONY: all
-all: index data align count simulate coverage evaluate
+all: index data align count simulate evaluate
 	@echo "All steps completed successfully!"
 
 # Cleanup generated files
